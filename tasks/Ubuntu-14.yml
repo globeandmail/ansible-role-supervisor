@@ -1,0 +1,62 @@
+---
+- name: Ubuntu-14 | Create directories
+  file:
+   path={{ item }}
+   state=directory
+   mode=0755
+  with_items:
+   - /etc/supervisor
+   - /etc/supervisor/conf.d
+   - /var/log/supervisor
+
+- name: Ubuntu-14 | Install python-setuptools
+  apt:
+   name=python-setuptools
+   state=latest
+   update_cache=yes
+
+- name: Ubuntu-14 | Install supervisor
+  easy_install:
+   name=supervisor
+   state=present
+
+- block:
+  - name: Ubuntu-14 | Display supervisord.conf src location if defined
+    debug: msg="path {{ supervisor_conf }}"
+
+  - name: Ubuntu-14 | Copy supervisor main config to /etc/supervisor/supervisord.conf
+    template:
+     src={{ supervisor_conf }}
+     dest=/etc/supervisor/supervisord.conf
+    register: supervisor_cfg_file
+  when: supervisor_conf is defined
+
+
+- name: Ubuntu-14 | Copy init script to /etc/init.d/supervisor
+  template:
+   src=Ubuntu-14/init.supervisor.j2
+   dest=/etc/init.d/supervisor
+   mode=0755
+
+- block:
+  - name: Ubuntu-14 | Debug print supervisor_conf_d path
+    debug: var=supervisor_conf_d
+
+  - name: Ubuntu-14 | Copy config files to conf.d on remote
+    template:
+      src={{ item }}
+      dest=/etc/supervisor/conf.d/{{ item | basename }}
+      owner=root
+      group=root
+      mode=0440
+    with_fileglob:
+      - "{{ supervisor_conf_d }}/*.conf"
+    notify: supervisor restart
+  when: supervisor_conf_d is defined
+
+- name: Ubuntu-14 | restart and enable supervisor service and 
+  service:
+    name=supervisor
+    state=restarted
+    enabled=yes
+  when: supervisor_cfg_file|changed
