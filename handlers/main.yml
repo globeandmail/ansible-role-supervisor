@@ -1,0 +1,9 @@
+---
+- name: supervisor restart
+  become_user: root
+  become_method: sudo
+  service:
+   name: supervisor
+   state: restarted
+   sleep: 3
+   enabled: true
