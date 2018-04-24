@@ -6,5 +6,5 @@
 
 
 - name: include distro specific tasks
-  include: "{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml"
+  include_tasks: "{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml"
   when: supervisor_conf is defined or supervisor_conf_d is defined
