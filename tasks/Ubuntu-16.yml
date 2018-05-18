@@ -46,7 +46,14 @@
       mode: 0440
     with_fileglob:
       - "{{ supervisor_conf_d }}/*.conf"
+    register: conf_d_files
+
+  - name: Ubuntu-16 | supervisorctl reread and update config
+    shell: supervisorctl reread && supervisorctl update
+    when: conf_d_files|changed
+
   when: supervisor_conf_d is defined
+  # EOF Block
 
 
 - name: Ubuntu-16 | copy systemd supervisor.service config
