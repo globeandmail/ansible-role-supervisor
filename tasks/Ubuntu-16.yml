@@ -9,16 +9,19 @@
    - /etc/supervisor/conf.d
    - /var/log/supervisor
 
+
 - name: Ubuntu-16 | Install python-setuptools
   apt:
    name: python-setuptools
    state: latest
    update_cache: yes
 
+
 - name: Ubuntu-16 | Install supervisor
   easy_install:
    name: supervisor
    state: present
+
 
 - block:
   - name: Ubuntu-16 | Display supervisord.conf src location if defined
@@ -31,6 +34,23 @@
      dest: /etc/supervisor/supervisord.conf
     register: supervisor_cfg_file
   when: supervisor_conf is defined
+
+
+- name: Ubuntu-16 | copy systemd supervisor.service config
+  template:
+   src: Ubuntu-16/systemd/supervisor.service.j2
+   dest: /lib/systemd/system/supervisor.service
+   mode: 0644
+   owner: root
+   group: root
+  register: supervisor_service_cfg
+
+
+- name: Ubuntu-16 | enable supervisor and make sure started
+  systemd:
+    name: supervisor
+    state: started
+    enabled: True
 
 
 - block:
@@ -56,17 +76,7 @@
   # EOF Block
 
 
-- name: Ubuntu-16 | copy systemd supervisor.service config
-  template:
-   src: Ubuntu-16/systemd/supervisor.service.j2
-   dest: /lib/systemd/system/supervisor.service
-   mode: 0644
-   owner: root
-   group: root
-  register: supervisor_service_cfg
-
-
-- name: Ubuntu-16 | systemctl daemon-reload if service unit is changed
+- name: Ubuntu-16 | systemctl daemon-reload if service unit if changed
   systemd:
     daemon_reload: yes
   when: supervisor_service_cfg|changed
@@ -77,10 +87,3 @@
     name: supervisor
     state: reloaded
   when: supervisor_cfg_file|changed
-
-
-- name: Ubuntu-16 | enable supervisor and make sure started
-  systemd:
-    name: supervisor
-    state: started
-    enabled: True
