@@ -33,11 +33,20 @@
   when: supervisor_conf is defined
 
 
-- name: Ubuntu-14 | Copy init script to /etc/init.d/supervisor
+#- name: Ubuntu-14 | Copy init script to /etc/init.d/supervisor
+#  template:
+#   src: Ubuntu-14/init.supervisor.j2
+#   dest: /etc/init.d/supervisor
+#   mode: 0755
+
+- name: Ubuntu-16 | copy systemd supervisor.service config
   template:
-   src: Ubuntu-14/init.supervisor.j2
-   dest: /etc/init.d/supervisor
-   mode: 0755
+   src: Ubuntu-16/systemd/supervisor.service.j2
+   dest: /etc/systemd/system/supervisor.service
+   mode: 0644
+   owner: root
+   group: root
+  register: supervisor_service_cfg
 
 - block:
   - name: Ubuntu-14 | Debug print supervisor_conf_d path
@@ -55,18 +64,16 @@
     notify: supervisor restart
   when: supervisor_conf_d is defined
 
-
 - name: Ubuntu-14 | restart and enable supervisor service
-  service:
+  systemd:
     name: supervisor
     state: restarted
     enabled: yes
     sleep: 3
   when: supervisor_cfg_file|changed
 
-
 - name: Ubuntu-14 | make sure supervisor running
-  service:
+  systemd:
     name: supervisor
     state: started
     enabled: yes
